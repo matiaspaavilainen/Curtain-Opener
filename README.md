@@ -5,7 +5,7 @@ During summer it is difficult to wake up in the morning, as the room is dark bec
 This project consist of an ESP32 controlling a 28BYJ-48 stepper motor and a Jetpack Compose Android app. The app will be used to control the ESP32 over serial bluetooth. Features include opening and closing the curtain manually and setting a time at which the curtain should open or close. I'm using [ESP32Time](https://github.com/fbiego/ESP32Time) library to keep track of time on the board. The ESP32, along with the necessary components to drive the stepper motor will be mounted to the window side face of the pelmet in a nice box. The curtain is going to be moved using a string, which is attached to one of the curtain clips.
 
 ## Current status
-This project is currently on hold, as I'm quite busy with other things. I would like to get this working before the summer. Currently I have the Arduino code to drive the stepper motor with bluetooth and setting the time, but I need to test the mechanical implementation. I might need to get some things 3D printed, like a pulley for the string to go around. I'm using a serial bluetooth android app for testing, but the goal is to make a custom app with Jetpack Compose to enhance the user experience.
+This project is currently on hold, as I'm quite busy with other things. I would like to get this working before summer though. Currently I have the Arduino code to drive the stepper motor with bluetooth and setting the time, but I need to design, implement and test the mechanics. I'm using a serial bluetooth android app for testing, but the goal is to make a custom app with Jetpack Compose to enhance the user experience and make it easier to set the opening and closing times.
 
 ## Techonologies used
 
