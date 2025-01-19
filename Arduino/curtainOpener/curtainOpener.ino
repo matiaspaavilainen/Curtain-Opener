@@ -1,13 +1,15 @@
-#include "BluetoothSerial.h"
+#include "secrets.h"
+#include <WiFi.h>
+#include <WebServer.h>
 #include <ESP32Time.h>
 
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-#endif
-
-BluetoothSerial SerialBT;
-
 ESP32Time rtc(0);
+
+WebServer server(80);
+
+IPAddress ip(192, 168, 1, 77);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 int Pin0 = 2;
 int Pin1 = 0;
@@ -15,26 +17,9 @@ int Pin2 = 4;
 int Pin3 = 16;
 int _step = 0;
 
-void setup() {
-  pinMode(Pin0, OUTPUT);
-  pinMode(Pin1, OUTPUT);
-  pinMode(Pin2, OUTPUT);
-  pinMode(Pin3, OUTPUT);
-
-  Serial.begin(115200);
-  SerialBT.begin("ESP32");
-
-  while (!Serial) {
-    delay(100);
-  }
-
-  SerialBT.println("Ready");
-
-  rtc.setTime(1731259680);
-
-  // Initial setup
-  // Get current time from phone
-  //rtc.setTime(SerialBT.readStringUntil('\n').toInt());
+void handleRoot() {
+  String message = "Curtain opener ready!";
+  server.send(200, "text/plain", message);
 }
 
 void rotate(int rotations, bool dir = true) {
@@ -120,18 +105,35 @@ void rotate(int rotations, bool dir = true) {
   digitalWrite(Pin3, LOW);
 }
 
-void loop() {
-  if (SerialBT.available() > 0) {
-    String command = SerialBT.readStringUntil('\n');
+void setup() {
+  pinMode(Pin0, OUTPUT);
+  pinMode(Pin1, OUTPUT);
+  pinMode(Pin2, OUTPUT);
+  pinMode(Pin3, OUTPUT);
 
-    int start = 0;
-    int split = command.indexOf(',') + 1;
+  Serial.begin(115200);
 
-    int rotations = command.substring(start, split).toInt();
-    int direction = command.substring(split, command.length()).toInt();
+  WiFi.config(ip, gateway, subnet);
 
-    SerialBT.println(rtc.getDateTime());
-
-    rotate(rotations, direction);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(SECRET_SSID);
+    WiFi.begin(SECRET_SSID, SECRET_PASSWORD);
+    delay(5000);
   }
+
+  Serial.print("Connected: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handleRoot);
+
+  server.begin();
+
+  // Initial setup
+  // Get current time from phone
+  //rtc.setTime(SerialBT.readStringUntil('\n').toInt());
+}
+
+void loop() {
+  server.handleClient();
 }
