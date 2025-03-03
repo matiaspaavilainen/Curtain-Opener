@@ -7,6 +7,8 @@
 
 #define DHTPIN 13
 #define DHTTYPE DHT22
+// only 2 opening and closing times, don't see the need for more
+#define ARRAY_LEN 2
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -27,36 +29,37 @@ int Pin2 = 4;
 int Pin3 = 16;
 int _step = 0;
 
-String opening_times[4];
-String closing_times[4];
+String opening_times[ARRAY_LEN];
+String closing_times[ARRAY_LEN];
 
-bool opened[4] = {false};
-bool closed[4] = {false}; 
+// defualt position is closed, so curtain needs to be closed when arduino is powered on
+bool closed = true;
+// If false, will not automatically open
+bool alarm_on = true;
 
 int current_index = 0;
 
-void get_root() {
-  String message = "Curtain opener ready!";
-  server.send(200, "text/plain", message);
-};
-
-void get_arduino_weather() {
+// Includes weather, time, alarmStatus and curtainStatus
+void get_arduino_status() {
   JsonDocument doc;
+
+  doc["curtainStatus"] = closed;
+  doc["alarmStatus"] = alarm_on;
+  doc["time"] = rtc.getDateTime();
+
   doc["temperature"] = dht.readTemperature();
   doc["humidity"] = dht.readHumidity();
-  doc["time"] = rtc.getDateTime();
+
+  JsonArray opening = doc["opening_times"].to<JsonArray>();
+  JsonArray closing = doc["closing_times"].to<JsonArray>();
+  for (int i = 0; i < ARRAY_LEN; i++) {
+    opening.add(opening_times[i]);
+    closing.add(closing_times[i]);
+  };
 
   String jsonres;
   serializeJson(doc, jsonres);
   server.send(200, "application/json", jsonres);
-}
-
-void get_arduino_time() {
-  if (rtc.getEpoch() < 17400000) {
-    server.send(302, "plain/text", "Time has not been set!");
-    return;
-  };
-  server.send(200, "text/plain", rtc.getDateTime());
 }
 
 void set_arduino_time() {
@@ -72,21 +75,6 @@ void set_arduino_time() {
   };
 }
 
-void get_op_clo_times() {
-  JsonDocument doc;
-  JsonArray opening = doc["opening_times"].to<JsonArray>();
-  JsonArray closing = doc["closing_times"].to<JsonArray>();
-  for (byte i = 0; i < 4; i++) {
-    opening.add(opening_times[i]);
-    closing.add(closing_times[i]);
-  };
-
-  String jsonres;
-  serializeJson(doc, jsonres);
-
-  server.send(200, "application/json", jsonres);
-}
-
 void set_op_clo_time() {
   if (server.hasArg("plain")) {
     String input = server.arg("plain");
@@ -99,24 +87,25 @@ void set_op_clo_time() {
       server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
       return;
     }
+    
+    // get the indicies to change
+    JsonArray index = doc["index"].as<JsonArray>();
+    JsonArray opening = doc["opening_times"].as<JsonArray>();
+    JsonArray closing = doc["closing_times"].as<JsonArray>();
 
-    opening_times[current_index] = doc["opening_time"].as<String>();
-    closing_times[current_index] = doc["closing_time"].as<String>();
+    // change only those indicies
+    // extra checks on the app to keep amount of code here low
+    for (int i = 0; i < index.size(); i++) {
+      int idx = index[i].as<int>();
+      opening_times[idx] = opening[i].as<String>();
+      closing_times[idx] = closing[i].as<String>();
+    }
 
-    current_index++;
-
-    server.send(200, "text/plain", String(current_index));  // Correct content type
+    Serial.println("Times set successfully");
+    server.send(200, "text/plain", "Times set!");
   } else {
     server.send(400, "application/json", "{\"error\":\"No JSON received\"}");
   }
-}
-
-void del_op_clo_time() {
-  int index_to_del = server.arg("plain").toInt();
-  opening_times[index_to_del] = "";
-  closing_times[index_to_del] = "";
-  current_index--;
-  server.send(204);
 }
 
 
@@ -204,26 +193,56 @@ void rotate(int rotations, bool dir = true) {
 }
 
 void open_and_close() {
+  // Only open automatically if alarm is set on
+  if (!alarm_on) {
+    return;
+  }
   // Get current time as a formatted string "hh:mm"
   String current_time = rtc.getTime("%H:%M");
 
-  for (int i = 0; i < 4; i++) {
-    if (opening_times[i] == current_time && !opened[i]) {
+  for (int i = 0; i < 2; i++) {
+    if (opening_times[i] == current_time && closed) {
       Serial.println("Opening action triggered");
-      opened[i] = true;  // Mark as triggered
       rotate(2, false);
-    } else {
-      opened[i] = false;
+      closed = false;
     }
     
-    if (closing_times[i] == current_time && !closed[i]) {
+    if (closing_times[i] == current_time && !closed) {
       Serial.println("Closing action triggered");
-      closed[i] = true;  // Mark as triggered
       rotate(2, true);
-    } else {
-      closed[i] = false;
+      closed = true;
     }
   }
+}
+
+int TOTAL_ROTATIONS = 20;
+
+// takes time, use to add progress spinner/bar and stop other functions
+// time to make 1 rotation is constantish, total rotations is constant, ez progress bar
+// might drift over time
+void open_manually() {
+  rotate(TOTAL_ROTATIONS, true);
+  closed = false;
+  server.send(200, "plain/text", "Opened");
+}
+
+void close_manually() {
+  rotate(TOTAL_ROTATIONS, false);
+  closed = true;
+  server.send(200, "plain/text", "Closed");
+}
+
+void move_manually() {
+  if (server.hasArg("plain")) {
+    String input = server.arg("plain");
+    if (input.startsWith("-")) {
+      rotate(abs(input.toInt()), false);
+      server.send(200, "plain/text", "-1");
+    } else {
+      rotate(input.toInt(), true);
+      server.send(200, "plain/text", "1");
+    }
+  };
 }
 
 void setup() {
@@ -246,16 +265,13 @@ void setup() {
   Serial.print("Connected: ");
   Serial.println(WiFi.localIP());
 
-  // GET
-  server.on("/", get_root);
-  server.on("/weather", get_arduino_weather);
-  server.on("/time", get_arduino_time);
-  server.on("/open_close_times", get_op_clo_times);
+  server.on("/status", HTTP_GET, get_arduino_status);
+  server.on("/open", HTTP_GET, open_manually);
+  server.on("/close", HTTP_GET, close_manually);
 
-  // SET
   server.on("/set/time", HTTP_POST, set_arduino_time);
-  server.on("/set/open_close_time", HTTP_POST, set_op_clo_time);
-  server.on("/del/op_clo", HTTP_DELETE, del_op_clo_time);
+  server.on("/set/open_close", HTTP_POST, set_op_clo_time);
+  server.on("/move", HTTP_POST, move_manually);
 
   server.begin();
   dht.begin();
