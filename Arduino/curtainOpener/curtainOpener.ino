@@ -32,7 +32,7 @@ int _step = 0;
 String opening_times[ARRAY_LEN];
 String closing_times[ARRAY_LEN];
 
-// defualt position is closed, so curtain needs to be closed when arduino is powered on
+// default position is closed, so curtain needs to be closed when arduino is powered on
 bool closed = true;
 // If false, will not automatically open
 bool alarm_on = true;
