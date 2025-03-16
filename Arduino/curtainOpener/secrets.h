@@ -1,0 +1,2 @@
+#define SECRET_SSID "ASUS_D8_2G"
+#define SECRET_PASSWORD "_Matti_54"
