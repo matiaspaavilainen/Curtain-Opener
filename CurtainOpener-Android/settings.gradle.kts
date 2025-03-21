@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Curtain Opener"
+rootProject.name = "CurtainOpener"
 include(":app")
