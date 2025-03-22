@@ -40,8 +40,6 @@ bool closed = true;
 // If false, will not automatically open
 bool alarm_on = true;
 
-int current_index = 0;
-
 // Includes weather, time, alarmStatus and curtainStatus
 void get_arduino_status() {
   JsonDocument doc;
@@ -110,7 +108,6 @@ void set_op_clo_time() {
     server.send(400, "application/json", "{\"error\":\"No JSON received\"}");
   }
 }
-
 
 void rotate(int rotations, bool dir = true) {
   long stepsToTake = rotations * 4096;
