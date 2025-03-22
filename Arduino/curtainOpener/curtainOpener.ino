@@ -32,6 +32,8 @@ int _step = 0;
 String opening_times[ARRAY_LEN];
 String closing_times[ARRAY_LEN];
 
+int TOTAL_ROTATIONS = 32;
+
 // default position is closed, so curtain needs to be closed when arduino is powered on
 // true == closed, false == open
 bool closed = true;
@@ -204,19 +206,17 @@ void open_and_close() {
   for (int i = 0; i < 2; i++) {
     if (opening_times[i] == current_time && closed) {
       Serial.println("Opening action triggered");
-      rotate(2, false);
+      rotate(TOTAL_ROTATIONS, true);
       closed = false;
     }
     
     if (closing_times[i] == current_time && !closed) {
       Serial.println("Closing action triggered");
-      rotate(2, true);
+      rotate(TOTAL_ROTATIONS, false);
       closed = true;
     }
   }
 }
-
-int TOTAL_ROTATIONS = 32;
 
 // takes time, use to add progress spinner/bar and stop other functions
 // time to make 1 rotation is constantish, total rotations is constant, ez progress bar
