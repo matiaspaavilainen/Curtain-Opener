@@ -50,7 +50,7 @@ void get_arduino_status() {
   doc["alarmStatus"] = alarm_on;
   doc["time"] = rtc.getDateTime();
 
-  doc["temperature"] = dht.readTemperature();
+  doc["temperature"] = dht.readTemperature() - 4;
   doc["humidity"] = dht.readHumidity();
 
   JsonArray opening = doc["opening_times"].to<JsonArray>();
