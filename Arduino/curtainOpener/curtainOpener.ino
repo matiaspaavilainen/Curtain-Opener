@@ -216,7 +216,7 @@ void open_and_close() {
   }
 }
 
-int TOTAL_ROTATIONS = 20;
+int TOTAL_ROTATIONS = 32;
 
 // takes time, use to add progress spinner/bar and stop other functions
 // time to make 1 rotation is constantish, total rotations is constant, ez progress bar
