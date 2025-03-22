@@ -23,16 +23,17 @@ IPAddress subnet(255, 255, 255, 0);
 float hum;
 float temp;
 
-int Pin0 = 2;
-int Pin1 = 0;
-int Pin2 = 4;
-int Pin3 = 16;
+int Pin0 = 16;
+int Pin1 = 4;
+int Pin2 = 0;
+int Pin3 = 2;
 int _step = 0;
 
 String opening_times[ARRAY_LEN];
 String closing_times[ARRAY_LEN];
 
 // default position is closed, so curtain needs to be closed when arduino is powered on
+// true == closed, false == open
 bool closed = true;
 // If false, will not automatically open
 bool alarm_on = true;
