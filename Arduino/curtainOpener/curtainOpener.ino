@@ -203,23 +203,21 @@ void open_and_close() {
   // Get current time as a formatted string "hh:mm"
   String current_time = rtc.getTime("%H:%M");
 
-  if (opening_times[current_index] == current_time && closed) {
-    Serial.println("Opening action triggered");
-    rotate(TOTAL_ROTATIONS, true);
-    closed = false;
-  }
-  
-  if (closing_times[current_index] == current_time && !closed) {
-    Serial.println("Closing action triggered");
-    rotate(TOTAL_ROTATIONS, false);
-    closed = true;
-    current_index++;
-    if (current_index > 1) {
-      current_index = 0;
+  for (int i = 0; i < 2; i++) {
+    if (opening_times[i] == current_time && closed) {
+      Serial.println("Opening action triggered");
+      rotate(TOTAL_ROTATIONS, true);
+      closed = false;
+      return;
+    }
+    
+    if (closing_times[i] == current_time && !closed) {
+      Serial.println("Closing action triggered");
+      rotate(TOTAL_ROTATIONS, false);
+      closed = true;
+      return;
     }
   }
-
-  
 }
 
 // takes time, use to add progress spinner/bar and stop other functions
