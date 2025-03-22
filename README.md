@@ -6,6 +6,7 @@ This project consists of an ESP32 controlling a 28BYJ-48 stepper motor and a Jet
 
 ## Current status
 - Arduino part is done and in testing
+- Opening takes about 2 minutes and 20 seconds
 - Currently using Postman to send commands
 - Need to get started on the app
 
