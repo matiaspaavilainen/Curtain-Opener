@@ -7,12 +7,12 @@
 
 #define DHTPIN 13
 #define DHTTYPE DHT22
-// only 2 opening and closing times, don't see the need for more
-#define ARRAY_LEN 2
+// one time for each day of the week
+#define ARRAY_LEN 7
 
 DHT dht(DHTPIN, DHTTYPE);
 
-ESP32Time rtc(0);
+ESP32Time rtc(3600*2);
 
 WebServer server(302);
 
@@ -30,7 +30,6 @@ int Pin3 = 2;
 int _step = 0;
 
 String opening_times[ARRAY_LEN];
-String closing_times[ARRAY_LEN];
 
 int TOTAL_ROTATIONS = 32;
 
@@ -52,10 +51,8 @@ void get_arduino_status() {
   doc["humidity"] = dht.readHumidity();
 
   JsonArray opening = doc["opening_times"].to<JsonArray>();
-  JsonArray closing = doc["closing_times"].to<JsonArray>();
   for (int i = 0; i < ARRAY_LEN; i++) {
     opening.add(opening_times[i]);
-    closing.add(closing_times[i]);
   };
 
   String jsonres;
@@ -76,7 +73,7 @@ void set_arduino_time() {
   };
 }
 
-void set_op_clo_time() {
+void set_open_time() {
   if (server.hasArg("plain")) {
     String input = server.arg("plain");
 
@@ -88,28 +85,20 @@ void set_op_clo_time() {
       server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
       return;
     }
-    
-    // get the indicies to change
-    JsonArray index = doc["index"].as<JsonArray>();
+
     JsonArray opening = doc["opening_times"].as<JsonArray>();
-    JsonArray closing = doc["closing_times"].as<JsonArray>();
 
-    // change only those indicies
-    // extra checks on the app to keep amount of code here low
-    for (int i = 0; i < index.size(); i++) {
-      int idx = index[i].as<int>();
-      opening_times[idx] = opening[i].as<String>();
-      closing_times[idx] = closing[i].as<String>();
+    // set all each time
+    for (int i = 0; i < ARRAY_LEN; i++) {
+      opening_times[i] = opening[i].as<String>();
     }
-
-    Serial.println("Times set successfully");
     server.send(200, "text/plain", "Times set!");
   } else {
     server.send(400, "application/json", "{\"error\":\"No JSON received\"}");
   }
 }
 
-void rotate(int rotations, bool dir = true) {
+void rotate(int rotations, bool dir) {
   long stepsToTake = rotations * 4096;
   int steps = 0;
   while (steps != stepsToTake) {
@@ -199,46 +188,29 @@ void open_and_close() {
   }
   // Get current time as a formatted string "hh:mm"
   String current_time = rtc.getTime("%H:%M");
-
-  for (int i = 0; i < 2; i++) {
-    if (opening_times[i] == current_time && closed) {
+  int current_day = rtc.getDayofWeek();
+  for (int i = 0; i < ARRAY_LEN; i++) {
+    // Check if it's the correct day and time
+    if (i == current_day && opening_times[i] == current_time && closed) {
       Serial.println("Opening action triggered");
       rotate(TOTAL_ROTATIONS, true);
-      closed = false;
-      return;
-    }
-    
-    if (closing_times[i] == current_time && !closed) {
-      Serial.println("Closing action triggered");
+      // close immediately afterwards
+      delay(1000);
       rotate(TOTAL_ROTATIONS, false);
-      closed = true;
       return;
     }
   }
-}
-
-// takes time, use to add progress spinner/bar and stop other functions
-// time to make 1 rotation is constantish, total rotations is constant, ez progress bar
-// might drift over time
-void open_manually() {
-  rotate(TOTAL_ROTATIONS, true);
-  closed = false;
-  server.send(200, "plain/text", "Opened");
-}
-
-void close_manually() {
-  rotate(TOTAL_ROTATIONS, false);
-  closed = true;
-  server.send(200, "plain/text", "Closed");
 }
 
 void move_manually() {
   if (server.hasArg("plain")) {
     String input = server.arg("plain");
     if (input.startsWith("-")) {
+      // negative close
       rotate(abs(input.toInt()), false);
       server.send(200, "plain/text", "-1");
     } else {
+      // positive open
       rotate(input.toInt(), true);
       server.send(200, "plain/text", "1");
     }
@@ -266,11 +238,9 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   server.on("/status", HTTP_GET, get_arduino_status);
-  server.on("/open", HTTP_GET, open_manually);
-  server.on("/close", HTTP_GET, close_manually);
 
   server.on("/set/time", HTTP_POST, set_arduino_time);
-  server.on("/set/open_close", HTTP_POST, set_op_clo_time);
+  server.on("/set/open_close", HTTP_POST, set_open_time);
   server.on("/move", HTTP_POST, move_manually);
 
   server.begin();
