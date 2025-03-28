@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -40,7 +41,35 @@ android {
 }
 
 dependencies {
+    // ViewModel
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    // ViewModel utilities for Compose
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // LiveData
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    // Lifecycles only (without ViewModel or LiveData)
+    implementation(libs.androidx.lifecycle.runtime.ktx.v287)
+    // Lifecycle utilities for Compose
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // Saved state module for ViewModel
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
+
+    // Annotation processor
+    //ksp(libs.androidx.lifecycle.compiler)
+    // alternately - if using Java8, use the following instead of lifecycle-compiler
+    implementation(libs.androidx.lifecycle.common.java8)
+
+    // optional - helpers for implementing LifecycleOwner in a Service
+    implementation(libs.androidx.lifecycle.service)
+
+    // optional - ProcessLifecycleOwner provides a lifecycle for the whole application process
+    implementation(libs.androidx.lifecycle.process)
+
+    implementation(libs.gson)
+
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.okhttp)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
