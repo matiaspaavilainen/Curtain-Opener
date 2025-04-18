@@ -33,70 +33,8 @@ String opening_times[ARRAY_LEN];
 
 int TOTAL_ROTATIONS = 32;
 
-// default position is closed, so curtain needs to be closed when arduino is powered on
-// true == closed, false == open
-bool closed = true;
 // If false, will not automatically open
 bool alarm_on = true;
-
-// Includes weather, time, alarmStatus and curtainStatus
-void get_arduino_status() {
-  JsonDocument doc;
-
-  doc["curtainStatus"] = closed;
-  doc["alarmStatus"] = alarm_on;
-  doc["time"] = rtc.getDateTime();
-
-  doc["temperature"] = dht.readTemperature() - 4;
-  doc["humidity"] = dht.readHumidity();
-
-  JsonArray opening = doc["opening_times"].to<JsonArray>();
-  for (int i = 0; i < ARRAY_LEN; i++) {
-    opening.add(opening_times[i]);
-  };
-
-  String jsonres;
-  serializeJson(doc, jsonres);
-  server.send(200, "application/json", jsonres);
-}
-
-void set_arduino_time() {
-  if (server.hasArg("plain")) {
-    String body = server.arg("plain");
-    Serial.println("Received time: ");
-    int time = body.toInt();
-    Serial.println(time);
-
-    rtc.setTime(time);
-
-    server.send(201, "text/plain", "Time set to");
-  };
-}
-
-void set_open_time() {
-  if (server.hasArg("plain")) {
-    String input = server.arg("plain");
-
-    StaticJsonDocument<200> doc;
-    DeserializationError error = deserializeJson(doc, input);
-
-    if (error) {
-      Serial.println("Failed to parse JSON");
-      server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
-      return;
-    }
-
-    JsonArray opening = doc["opening_times"].as<JsonArray>();
-
-    // set all each time
-    for (int i = 0; i < ARRAY_LEN; i++) {
-      opening_times[i] = opening[i].as<String>();
-    }
-    server.send(200, "text/plain", "Times set!");
-  } else {
-    server.send(400, "application/json", "{\"error\":\"No JSON received\"}");
-  }
-}
 
 void rotate(int rotations, bool dir) {
   long stepsToTake = rotations * 4096;
@@ -181,6 +119,64 @@ void rotate(int rotations, bool dir) {
   digitalWrite(Pin3, LOW);
 }
 
+// Includes weather, time, alarmStatus and curtainStatus
+void get_arduino_status() {
+  JsonDocument doc;
+
+  doc["alarmStatus"] = alarm_on;
+  doc["time"] = rtc.getDateTime();
+
+  doc["temperature"] = dht.readTemperature() - 4;
+  doc["humidity"] = dht.readHumidity();
+
+  JsonArray opening = doc["opening_times"].to<JsonArray>();
+  for (int i = 0; i < ARRAY_LEN; i++) {
+    opening.add(opening_times[i]);
+  };
+
+  String jsonres;
+  serializeJson(doc, jsonres);
+  server.send(200, "application/json", jsonres);
+}
+
+void set_arduino_time() {
+  if (server.hasArg("plain")) {
+    String body = server.arg("plain");
+    Serial.println("Received time: ");
+    int time = body.toInt();
+    Serial.println(time);
+
+    rtc.setTime(time);
+
+    server.send(201, "text/plain", "Time set");
+  };
+}
+
+void set_open_time() {
+  if (server.hasArg("plain")) {
+    String input = server.arg("plain");
+
+    StaticJsonDocument<200> doc;
+    DeserializationError error = deserializeJson(doc, input);
+
+    if (error) {
+      Serial.println("Failed to parse JSON");
+      server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+      return;
+    }
+
+    JsonArray opening = doc["opening_times"].as<JsonArray>();
+
+    // set all each time
+    for (int i = 0; i < ARRAY_LEN; i++) {
+      opening_times[i] = opening[i].as<String>();
+    }
+    server.send(200, "text/plain", "Times set!");
+  } else {
+    server.send(400, "application/json", "{\"error\":\"No JSON received\"}");
+  }
+}
+
 void open_and_close() {
   // Only open automatically if alarm is set on
   if (!alarm_on) {
@@ -200,6 +196,11 @@ void open_and_close() {
       return;
     }
   }
+}
+
+void toggle_alarm() {
+  alarm_on = !alarm_on
+  server.send(200, "plain/text", String(alarm_on))
 }
 
 void move_manually() {
@@ -238,6 +239,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   server.on("/status", HTTP_GET, get_arduino_status);
+  server.on("/alarm", HTTP_GET, toggle_alarm);
 
   server.on("/set/time", HTTP_POST, set_arduino_time);
   server.on("/set/open_close", HTTP_POST, set_open_time);
