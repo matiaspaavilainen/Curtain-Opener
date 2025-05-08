@@ -12,7 +12,7 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
-ESP32Time rtc(3600*2);
+ESP32Time rtc(3600*3);
 
 WebServer server(302);
 
@@ -126,7 +126,7 @@ void get_arduino_status() {
   doc["alarmStatus"] = alarm_on;
   doc["time"] = rtc.getDateTime();
 
-  doc["temperature"] = dht.readTemperature() - 4;
+  doc["temperature"] = dht.readTemperature();
   doc["humidity"] = dht.readHumidity();
 
   JsonArray opening = doc["opening_times"].to<JsonArray>();
@@ -187,7 +187,7 @@ void open_and_close() {
   int current_day = rtc.getDayofWeek();
   for (int i = 0; i < ARRAY_LEN; i++) {
     // Check if it's the correct day and time
-    if (i == current_day && opening_times[i] == current_time && closed) {
+    if (i == current_day && opening_times[i] == current_time) {
       Serial.println("Opening action triggered");
       rotate(TOTAL_ROTATIONS, true);
       // close immediately afterwards
@@ -199,8 +199,8 @@ void open_and_close() {
 }
 
 void toggle_alarm() {
-  alarm_on = !alarm_on
-  server.send(200, "plain/text", String(alarm_on))
+  alarm_on = !alarm_on;
+  server.send(200, "plain/text", String(alarm_on));
 }
 
 void move_manually() {
