@@ -12,7 +12,7 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
-ESP32Time rtc(3600*3);
+ESP32Time rtc();
 
 WebServer server(302);
 
@@ -20,21 +20,21 @@ IPAddress ip(192, 168, 1, 77);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-float hum;
-float temp;
-
 int Pin0 = 16;
 int Pin1 = 4;
 int Pin2 = 0;
 int Pin3 = 2;
 int _step = 0;
 
-String opening_times[ARRAY_LEN];
+String openingTimes[ARRAY_LEN];
 
 int TOTAL_ROTATIONS = 32;
 
 // If false, will not automatically open
 bool alarm_on = true;
+
+float hum;
+float temp;
 
 void rotate(int rotations, bool dir) {
   long stepsToTake = rotations * 4096;
@@ -119,7 +119,7 @@ void rotate(int rotations, bool dir) {
   digitalWrite(Pin3, LOW);
 }
 
-// Includes weather, time, alarmStatus and curtainStatus
+// Includes weather, time, alarmStatus
 void get_arduino_status() {
   JsonDocument doc;
 
@@ -129,9 +129,9 @@ void get_arduino_status() {
   doc["temperature"] = dht.readTemperature();
   doc["humidity"] = dht.readHumidity();
 
-  JsonArray opening = doc["opening_times"].to<JsonArray>();
+  JsonArray opening = doc["openingTimes"].to<JsonArray>();
   for (int i = 0; i < ARRAY_LEN; i++) {
-    opening.add(opening_times[i]);
+    opening.add(openingTimes[i]);
   };
 
   String jsonres;
@@ -148,7 +148,7 @@ void set_arduino_time() {
 
     rtc.setTime(time);
 
-    server.send(201, "text/plain", "Time set");
+    server.send(201, "text/plain", String(rtc.getEpoch()));
   };
 }
 
@@ -165,11 +165,11 @@ void set_open_time() {
       return;
     }
 
-    JsonArray opening = doc["opening_times"].as<JsonArray>();
+    JsonArray opening = doc["openingTimes"].as<JsonArray>();
 
     // set all each time
     for (int i = 0; i < ARRAY_LEN; i++) {
-      opening_times[i] = opening[i].as<String>();
+      openingTimes[i] = opening[i].as<String>();
     }
     server.send(200, "text/plain", "Times set!");
   } else {
@@ -187,7 +187,7 @@ void open_and_close() {
   int current_day = rtc.getDayofWeek();
   for (int i = 0; i < ARRAY_LEN; i++) {
     // Check if it's the correct day and time
-    if (i == current_day && opening_times[i] == current_time) {
+    if (i == current_day && openingTimes[i] == current_time) {
       Serial.println("Opening action triggered");
       rotate(TOTAL_ROTATIONS, true);
       // close immediately afterwards
@@ -242,7 +242,7 @@ void setup() {
   server.on("/alarm", HTTP_GET, toggle_alarm);
 
   server.on("/set/time", HTTP_POST, set_arduino_time);
-  server.on("/set/open_close", HTTP_POST, set_open_time);
+  server.on("/set/open", HTTP_POST, set_open_time);
   server.on("/move", HTTP_POST, move_manually);
 
   server.begin();
