@@ -9,7 +9,7 @@ alarm_status = True
 tmps = [19.6, 21.4, 22.5, 27.8, 23.0]
 hums = [50.2, 61.4, 5.5, 16.8, 34.0]
 
-opening_times = []
+opening_times = ["10:00", "07:30", "07:30", "07:30", "07:30", "07:30", "10:00"]
 
 
 class OpenTimes(BaseModel):

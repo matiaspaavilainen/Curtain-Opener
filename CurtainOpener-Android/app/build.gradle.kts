@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    kotlin("plugin.serialization") version "2.1.21"
 }
 
 android {
@@ -51,6 +52,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx.v287)
     // Lifecycle utilities for Compose
     implementation(libs.androidx.lifecycle.runtime.compose)
+
+    // json
+    implementation(libs.kotlinx.serialization.json)
 
     // Saved state module for ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
