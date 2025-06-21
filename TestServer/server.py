@@ -38,19 +38,22 @@ async def status():
 async def alarm():
     global alarm_status
     alarm_status = not alarm_status
-    return str(alarm_status)
+    return alarm_status
 
 
 @app.post("/set/time")
 async def setTime(request: Request):
     body = await request.body()
+    print(body)
     timestamp = int(body.decode("utf-8"))
-    return str(timestamp)
+    print(timestamp)
+    print(datetime.fromtimestamp(timestamp))
 
 
 @app.post("/set/open")
 async def setOpen(open: OpenTimes):
     global opening_times
+    print(open)
     opening_times = open
     return "Times set!"
 

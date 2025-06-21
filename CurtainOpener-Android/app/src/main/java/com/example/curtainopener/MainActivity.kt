@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.AccountBox
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.BottomAppBar
@@ -29,7 +31,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,8 +65,18 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // Get data from server immediately
-    viewModel.getStatus()
+    // Sync time immediately, also calls getStatus
+    viewModel.setArduinoTime()
+
+    val basicTextBox = Modifier
+        .border(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.primary,
+            shape = RoundedCornerShape(size = 8.dp)
+        )
+        .clip(RoundedCornerShape(size = 8.dp))
+        .background(MaterialTheme.colorScheme.primaryContainer)
+        .padding(8.dp)
 
     Scaffold(
         topBar = {
@@ -87,27 +102,27 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
             BottomAppBar(
                 actions = {
                     IconButton(onClick = { viewModel.getStatus() }) {
-                        Icon(Icons.Rounded.Refresh, contentDescription = "Localized description")
-                    }
-                    IconButton(onClick = { /* do something */ }) {
                         Icon(
-                            Icons.Rounded.Home,
+                            Icons.Rounded.Refresh,
                             contentDescription = "Localized description",
+                        )
+                    }
+                    IconButton(onClick = { viewModel.toggleAlarm() }) {
+                        Icon(
+                            Icons.Rounded.Notifications,
+                            contentDescription = "Localized description",
+                        )
+                    }
+
+                    IconButton(onClick = { viewModel.setArduinoTime() }) {
+                        Icon(
+                            Icons.Rounded.AccountBox, contentDescription = "Set Arduino Time"
                         )
                     }
                 })
         },
 
         ) { innerPadding ->
-        val basicTextBox = Modifier
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(size = 8.dp)
-            )
-            .clip(RoundedCornerShape(size = 8.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(8.dp)
 
         Column(
             modifier = Modifier
@@ -115,24 +130,14 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
                 .padding(8.dp)
         ) {
             Weather(
-                temperature = "${uiState.temperature} C", humidity = "${uiState.humidity} %"
+                temperature = "${uiState.temperature} °C", humidity = "${uiState.humidity} %"
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val weekdays =
-                listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                weekdays.zip(uiState.openingTimes).forEach { (day, time) ->
-                    TimeRow(day, time, modifier = basicTextBox)
-                }
-            }
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = "Alarm status: ${uiState.alarmStatus}",
                     modifier = basicTextBox.weight(1f)
@@ -142,13 +147,66 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
                     text = "Time synced: ${uiState.timeCorrect}", modifier = basicTextBox.weight(1f)
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            var openTimeDialog = remember { mutableStateOf(false) }
+            var currentDay = remember { mutableStateOf("") }
+
+            if (openTimeDialog.value) {
+                TimeDialog(
+                    onDismissRequest = { openTimeDialog.value = false },
+                    onConfirmation = { timePickerState, daysToChange ->
+                        var mutableOpeningTimes = uiState.openingTimes.toMutableMap()
+                        daysToChange.forEach { day ->
+                            mutableOpeningTimes[day] =
+                                "${timePickerState.hour}:${timePickerState.minute}"
+                        }
+                        viewModel.setOpenTimes(mutableOpeningTimes)
+                        openTimeDialog.value = false
+                    },
+                    openTimeDialog = openTimeDialog,
+                    currentDay = currentDay.value,
+                    currentTime = uiState.openingTimes[currentDay.value].toString()
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                uiState.openingTimes.forEach { (day, time) ->
+                    TimeRow(day, time, openTimeDialog, currentDay)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun TimeRow(day: String, time: String, modifier: Modifier) {
-    Text(text = "${day}: $time", modifier = modifier.fillMaxWidth())
+fun TimeRow(
+    day: String,
+    time: String,
+    openTimeDialog: MutableState<Boolean>,
+    currentDay: MutableState<String>,
+
+    ) {
+    Row(
+        modifier = Modifier
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(size = 8.dp)
+            )
+            .clip(RoundedCornerShape(size = 8.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(8.dp)
+            .clickable(true, onClick = {
+                currentDay.value = day
+                openTimeDialog.value = true
+            })
+            .fillMaxWidth()
+    ) {
+        Text(
+            text = "${day}: $time"
+        )
+    }
 }
 
 @Preview
