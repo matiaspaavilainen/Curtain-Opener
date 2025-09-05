@@ -1,6 +1,7 @@
 package com.example.curtainopener
 
 import android.os.Bundle
+import android.os.Handler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -16,7 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountBox
+import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
@@ -38,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -66,7 +66,10 @@ class MainActivity : ComponentActivity() {
 fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Sync time immediately, also calls getStatus
-    viewModel.setArduinoTime()
+
+    Handler().postDelayed({
+        viewModel.setArduinoTime()
+    }, 2000)
 
     val basicTextBox = Modifier
         .border(
@@ -116,7 +119,7 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
 
                     IconButton(onClick = { viewModel.setArduinoTime() }) {
                         Icon(
-                            Icons.Rounded.AccountBox, contentDescription = "Set Arduino Time"
+                            Icons.Rounded.DateRange, contentDescription = "Set Arduino Time"
                         )
                     }
                 })
@@ -149,24 +152,26 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            var openTimeDialog = remember { mutableStateOf(false) }
-            var currentDay = remember { mutableStateOf("") }
+            val openTimeDialog = remember { mutableStateOf(false) }
+            val currentDay = remember { mutableStateOf("") }
 
             if (openTimeDialog.value) {
                 TimeDialog(
                     onDismissRequest = { openTimeDialog.value = false },
                     onConfirmation = { timePickerState, daysToChange ->
-                        var mutableOpeningTimes = uiState.openingTimes.toMutableMap()
+                        val mutableOpeningTimes = uiState.openingTimes.toMutableMap()
+                        println("Mutable open empty $mutableOpeningTimes")
                         daysToChange.forEach { day ->
                             mutableOpeningTimes[day] =
-                                "${timePickerState.hour}:${timePickerState.minute}"
+                                "${timePickerState.hour.toString().padStart(2, '0')}:${timePickerState.minute.toString().padStart(2, '0')}"
                         }
+                        println("Mutable open $mutableOpeningTimes")
                         viewModel.setOpenTimes(mutableOpeningTimes)
                         openTimeDialog.value = false
                     },
                     openTimeDialog = openTimeDialog,
                     currentDay = currentDay.value,
-                    currentTime = uiState.openingTimes[currentDay.value].toString()
+                    currentTime = uiState.time
                 )
             }
 
@@ -207,11 +212,5 @@ fun TimeRow(
             text = "${day}: $time"
         )
     }
-}
-
-@Preview
-@Composable
-fun BottomBarPrev() {
-    HomePage()
 }
   
