@@ -12,7 +12,7 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
-ESP32Time rtc();
+ESP32Time rtc;
 
 WebServer server(302);
 
@@ -124,9 +124,9 @@ void get_arduino_status() {
   JsonDocument doc;
 
   doc["alarmStatus"] = alarm_on;
-  doc["time"] = rtc.getDateTime();
+  doc["time"] = rtc.getEpoch();
 
-  doc["temperature"] = dht.readTemperature();
+  doc["temperature"] = (dht.readTemperature() - 3);
   doc["humidity"] = dht.readHumidity();
 
   JsonArray opening = doc["openingTimes"].to<JsonArray>();
@@ -142,9 +142,7 @@ void get_arduino_status() {
 void set_arduino_time() {
   if (server.hasArg("plain")) {
     String body = server.arg("plain");
-    Serial.println("Received time: ");
     int time = body.toInt();
-    Serial.println(time);
 
     rtc.setTime(time);
 
@@ -155,12 +153,10 @@ void set_arduino_time() {
 void set_open_time() {
   if (server.hasArg("plain")) {
     String input = server.arg("plain");
-
     StaticJsonDocument<200> doc;
     DeserializationError error = deserializeJson(doc, input);
 
     if (error) {
-      Serial.println("Failed to parse JSON");
       server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
       return;
     }
@@ -188,7 +184,6 @@ void open_and_close() {
   for (int i = 0; i < ARRAY_LEN; i++) {
     // Check if it's the correct day and time
     if (i == current_day && openingTimes[i] == current_time) {
-      Serial.println("Opening action triggered");
       rotate(TOTAL_ROTATIONS, true);
       // close immediately afterwards
       delay(1000);
@@ -229,14 +224,9 @@ void setup() {
   WiFi.config(ip, gateway, subnet);
 
   while (WiFi.status() != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(SECRET_SSID);
     WiFi.begin(SECRET_SSID, SECRET_PASSWORD);
     delay(5000);
   }
-
-  Serial.print("Connected: ");
-  Serial.println(WiFi.localIP());
 
   server.on("/status", HTTP_GET, get_arduino_status);
   server.on("/alarm", HTTP_GET, toggle_alarm);
