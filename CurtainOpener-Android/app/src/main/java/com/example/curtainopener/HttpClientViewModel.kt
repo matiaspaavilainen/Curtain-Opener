@@ -1,7 +1,6 @@
 package com.example.curtainopener
 
 import android.util.Log
-import androidx.compose.material3.darkColorScheme
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -12,9 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToJsonElement
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -48,7 +45,7 @@ data class StatusUiState(
     val timeCorrect: Boolean = false,
     val temperature: Double = 0.0,
     val humidity: Double = 0.0,
-    val openingTimes: Map<String, String> = mapOf<String, String>("" to "")
+    val openingTimes: Map<String, String> = mapOf("" to "")
 )
 
 class HttpClientViewModel : ViewModel() {
@@ -82,7 +79,7 @@ class HttpClientViewModel : ViewModel() {
                         return@use
                     }
 
-                    val time = Instant.ofEpochSecond(status.time).atZone(ZoneId.systemDefault())
+                    val time = Instant.ofEpochSecond(status.time).atZone(ZoneId.of("UTC"))
                         .toLocalDateTime()
 
                     println(time)
@@ -121,8 +118,8 @@ class HttpClientViewModel : ViewModel() {
 
     fun setArduinoTime() {
         viewModelScope.launch(Dispatchers.IO) {
-            val offset: ZoneOffset = ZoneId.systemDefault().rules.getOffset(LocalDateTime.now())
-            val postBody = LocalDateTime.now().toEpochSecond(offset).toString()
+            //val offset: ZoneOffset = ZoneId.systemDefault().rules.getOffset(LocalDateTime.now())
+            val postBody = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC).toString()
 
             val request = Request.Builder().url("$baseUrl/set/time")
                 .post(postBody.toRequestBody(MEDIA_TYPE_PLAIN)).build()
