@@ -166,6 +166,7 @@ void set_open_time() {
     // set all each time
     for (int i = 0; i < ARRAY_LEN; i++) {
       openingTimes[i] = opening[i].as<String>();
+      Serial.println(openingTimes[i]);
     }
     server.send(200, "text/plain", "Times set!");
   } else {
@@ -213,20 +214,22 @@ void move_manually() {
   };
 }
 
+void wifi_connection() {
+  while (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin(SECRET_SSID, SECRET_PASSWORD);
+    delay(5000);
+  }
+}
+
 void setup() {
+  WiFi.config(ip, gateway, subnet);
+  wifi_connection();
+
   pinMode(Pin0, OUTPUT);
   pinMode(Pin1, OUTPUT);
   pinMode(Pin2, OUTPUT);
   pinMode(Pin3, OUTPUT);
 
-  Serial.begin(115200);
-
-  WiFi.config(ip, gateway, subnet);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    WiFi.begin(SECRET_SSID, SECRET_PASSWORD);
-    delay(5000);
-  }
 
   server.on("/status", HTTP_GET, get_arduino_status);
   server.on("/alarm", HTTP_GET, toggle_alarm);
@@ -240,6 +243,7 @@ void setup() {
 }
 
 void loop() {
+  wifi_connection();
   server.handleClient();
   open_and_close();
 }
