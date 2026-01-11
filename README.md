@@ -23,7 +23,7 @@ This project consists of an ESP32 controlling a 28BYJ-48 stepper motor and a Jet
     <img src="https://github.com/user-attachments/assets/997d62b1-b411-4a92-af57-61ae990d37c8"
          alt="Painted electronics box, mounted to the wall"
     >
-    <figcaption>The final version of the electronics box, mounted on the wall. The temperature sensor is on top of the box, for more accurate readings. Painted white to make it less obvious. I should have put the motor to the other side of the box, beacuse then it would have been hidden by the curtain almost completely. Power is supplied with a 5V wall power adapter and a USB cables to power the motor, and Arduino.
+    <figcaption>The final version of the electronics box, mounted on the wall. The temperature sensor is on top of the box. Painted white to make it less obvious. I should have put the motor to the other side of the box, beacuse then it would have been hidden by the curtain almost completely. Power is supplied with a 5V wall power adapter and a USB cables to power the motor, and Arduino.
     </figcaption>
 </figure>
 
