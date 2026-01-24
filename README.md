@@ -31,13 +31,12 @@ This project consists of an ESP32 controlling a 28BYJ-48 stepper motor and a Jet
 ## Current status
 - Arduino part is done and in use
 - Core functionality on the app is complete, set opening times, view status
-- Basic UI
+- Basic UI is functional
   
 ## TODO
-- Add manual opening functinonality, fix alarm toggle
-- Improve UI
+- Add manual opening functinonality, not really needed though
+- Make UI prettier
 - Other "decorations" (app icon, splash screen, ...)
-- Add weather data collection and graphing?
 
 ## Techonologies used
 
