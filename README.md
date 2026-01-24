@@ -36,7 +36,6 @@ This project consists of an ESP32 controlling a 28BYJ-48 stepper motor and a Jet
 ## TODO
 - Add manual opening functinonality, not really needed though
 - Make UI prettier
-- Other "decorations" (app icon, splash screen, ...)
 
 ## Techonologies used
 
