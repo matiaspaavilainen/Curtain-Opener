@@ -38,11 +38,12 @@ fun Weather(temperature: String, humidity: String) {
                 .weight(1f)
         ) {
             Text(
-                text = "Temperature"
+                text = "Temperature",
+
             )
             Text(
                 text = temperature,
-                fontSize = 24.sp,
+                fontSize = 36.sp,
             )
         }
         Column(
@@ -54,7 +55,7 @@ fun Weather(temperature: String, humidity: String) {
             )
             Text(
                 text = humidity,
-                fontSize = 24.sp,
+                fontSize = 36.sp,
             )
         }
     }
@@ -64,6 +65,6 @@ fun Weather(temperature: String, humidity: String) {
 @Composable
 fun WeatherPrev() {
     Weather(
-        temperature = "21.3 C", humidity = "45 %"
+        temperature = "21.3 °C", humidity = "45.7 %"
     )
 }

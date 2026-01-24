@@ -70,19 +70,14 @@ class HttpClientViewModel : ViewModel() {
                         return@use
                     }
 
-                    val responseBodyString = response.body?.string()
-                    val status = responseBodyString?.let {
+                    val responseBodyString = response.body.string()
+                    val status = responseBodyString.let {
                         Json.decodeFromString<StatusJson>(it)
-                    }
-                    if (status == null) {
-                        Log.e("GET", "Response body was null or JSON parsing failed")
-                        return@use
                     }
 
                     val time = Instant.ofEpochSecond(status.time).atZone(ZoneId.of("UTC"))
                         .toLocalDateTime()
 
-                    println(time)
                     val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
                     // probably not ideal, accuracy by minutes is good enough though
                     val timeCorrect = time.format(dtf) == LocalTime.now().format(dtf)
@@ -95,7 +90,6 @@ class HttpClientViewModel : ViewModel() {
                     val openTimeList = status.openingTimes
 
                     val openingTimesMap = weekdays.zip(openTimeList).toMap()
-                    println(openingTimesMap)
 
                     withContext(Dispatchers.Main) {
                         _uiState.update { currentState ->
@@ -118,7 +112,6 @@ class HttpClientViewModel : ViewModel() {
 
     fun setArduinoTime() {
         viewModelScope.launch(Dispatchers.IO) {
-            //val offset: ZoneOffset = ZoneId.systemDefault().rules.getOffset(LocalDateTime.now())
             val postBody = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC).toString()
 
             val request = Request.Builder().url("$baseUrl/set/time")
@@ -175,14 +168,14 @@ class HttpClientViewModel : ViewModel() {
                         return@use
                     }
 
+                    val alarmStatusString = response.body.string()
+                    val alarm: Boolean = alarmStatusString.toInt() == 1
+
                     withContext(Dispatchers.Main) {
                         _uiState.update { currentState ->
-                            response.body?.let { it1 ->
-                                val alarm = it1.string().toBoolean()
-                                currentState.copy(
-                                    alarmStatus = alarm
-                                )
-                            }!!
+                            currentState.copy(
+                                alarmStatus = alarm
+                            )
                         }
                     }
                 }

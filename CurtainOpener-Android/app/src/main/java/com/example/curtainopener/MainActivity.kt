@@ -10,17 +10,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,6 +42,7 @@ import com.example.curtainopener.ui.theme.CurtainOpenerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_CurtainOpener)
         super.onCreate(savedInstanceState)
         setContent {
             CurtainOpenerTheme {
@@ -69,7 +66,7 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
 
     Handler().postDelayed({
         viewModel.setArduinoTime()
-    }, 2000)
+    }, 1000)
 
     val basicTextBox = Modifier
         .border(
@@ -84,21 +81,14 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.primary,
-            ), title = {
-                Text(
-                    "Curtain Opener", maxLines = 1, overflow = TextOverflow.Ellipsis
-                )
-            }, actions = {
-                IconButton(onClick = { /* do something */ }) {
-                    Icon(
-                        imageVector = Icons.Rounded.Settings,
-                        contentDescription = "Localized description"
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ), title = {
+                    Text(
+                        "Curtain Opener", maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
-                }
-            })
+                })
         },
 
         bottomBar = {
@@ -107,19 +97,13 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
                     IconButton(onClick = { viewModel.getStatus() }) {
                         Icon(
                             Icons.Rounded.Refresh,
-                            contentDescription = "Localized description",
+                            contentDescription = "Get status",
                         )
                     }
                     IconButton(onClick = { viewModel.toggleAlarm() }) {
                         Icon(
                             Icons.Rounded.Notifications,
-                            contentDescription = "Localized description",
-                        )
-                    }
-
-                    IconButton(onClick = { viewModel.setArduinoTime() }) {
-                        Icon(
-                            Icons.Rounded.DateRange, contentDescription = "Set Arduino Time"
+                            contentDescription = "Toggle alarm",
                         )
                     }
                 })
@@ -128,6 +112,7 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
         ) { innerPadding ->
 
         Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(8.dp)
@@ -135,8 +120,6 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
             Weather(
                 temperature = "${uiState.temperature} °C", humidity = "${uiState.humidity} %"
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -151,7 +134,6 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
             val openTimeDialog = remember { mutableStateOf(false) }
             val currentDay = remember { mutableStateOf("") }
 
@@ -160,12 +142,12 @@ fun HomePage(viewModel: HttpClientViewModel = viewModel()) {
                     onDismissRequest = { openTimeDialog.value = false },
                     onConfirmation = { timePickerState, daysToChange ->
                         val mutableOpeningTimes = uiState.openingTimes.toMutableMap()
-                        println("Mutable open empty $mutableOpeningTimes")
                         daysToChange.forEach { day ->
-                            mutableOpeningTimes[day] =
-                                "${timePickerState.hour.toString().padStart(2, '0')}:${timePickerState.minute.toString().padStart(2, '0')}"
+                            mutableOpeningTimes[day] = "${
+                                timePickerState.hour.toString().padStart(2, '0')
+                            }:${timePickerState.minute.toString().padStart(2, '0')}"
                         }
-                        println("Mutable open $mutableOpeningTimes")
+
                         viewModel.setOpenTimes(mutableOpeningTimes)
                         openTimeDialog.value = false
                     },

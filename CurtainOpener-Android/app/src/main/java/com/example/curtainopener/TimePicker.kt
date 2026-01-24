@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import java.time.DayOfWeek
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,31 +102,23 @@ fun DropDown(currentDay: String, daysToChange: MutableList<String>) {
     )
     var index by remember { mutableIntStateOf(0) }
     Box(
-        modifier = Modifier
-            .padding(16.dp)
+        modifier = Modifier.padding(16.dp)
     ) {
         Text(
-            text = dropDownList[index],
-            modifier = Modifier
-                .clickable(true, onClick = {
+            text = dropDownList[index], modifier = Modifier.clickable(true, onClick = {
                     expanded = !expanded
                 })
         )
         DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
+            expanded = expanded, onDismissRequest = { expanded = false }) {
             dropDownList.forEach { day ->
-                DropdownMenuItem(
-                    text = { Text(text = day) },
-                    onClick = {
-                        index = dropDownList.indexOf(day)
-                        daysToChange.clear()
-                        daysToChange.addAll(0, daysToChangeList[index])
-                        println("Days to change $daysToChange")
-                        expanded = false
-                    }
-                )
+                DropdownMenuItem(text = { Text(text = day) }, onClick = {
+                    index = dropDownList.indexOf(day)
+                    daysToChange.clear()
+                    daysToChange.addAll(0, daysToChangeList[index])
+                    println("Days to change $daysToChange")
+                    expanded = false
+                })
             }
         }
     }
