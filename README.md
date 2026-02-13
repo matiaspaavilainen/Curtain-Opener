@@ -4,7 +4,7 @@
 During summer it is difficult to wake up in the morning, as the room is dark because of blackout curtains. It's hard to sleep when the sun is shining at 23:07, so blackout curtains are needed. With this in mind, I wanted to be able to open the curtain at a specific time in the morning, to make waking up easier by taking advantage of the early sunlight.
 
 ## Description
-This project consists of an ESP32 controlling a 28BYJ-48 stepper motor and a Jetpack Compose Android app. I'm also using the DHT-22 temperature and humidity sensor for a simple indoor weather station. The app will be used to control the ESP32, which hosts a simple HTTP server on my Wi-Fi network to accept commands. Features include opening and "closing" the curtain manually and setting times at which the curtain should open automatically per day. The curtain needs to be closed manually, when the string has loosened after the curtain is opened. The motor can also be driven manually, specifying the number of rotations and direction. I'm using [ESP32Time](https://github.com/fbiego/ESP32Time) library to keep track of time on the board. The ESP32, along with the necessary components to drive the stepper motor is attached to my wall. The curtain is going to be moved using a string, which is attached to one of the curtain clips. There is a small weight hanging on the string to keep it tought, to stop it from getting tangled in the reel. I can't really build automatic closing, as that would require some sort of pulley system at the ending point of the curtain rail.
+This project consists of an ESP32 controlling a 28BYJ-48 stepper motor and a Jetpack Compose Android app. I'm also using the DHT-22 temperature and humidity sensor for a simple indoor weather station. The app is used to control the ESP32, which hosts a simple HTTP server on my Wi-Fi network to accept commands. With the app it's possible to set the opening times for each day of the week separately, and view the data from DHT-22. I'm using [ESP32Time](https://github.com/fbiego/ESP32Time) library to keep track of time on the board. The ESP32, along with the necessary components to drive the stepper motor is attached to my wall. The curtain is moved using a string, which is tied to one of the curtain clips. There is a small weight hanging on the string to keep it tought, to stop it from getting tangled in the reel. I can't really build automatic closing, as that would require some sort of pulley system at the ending point of the curtain rail.
 
 ## Pictures
 
@@ -35,7 +35,6 @@ This project consists of an ESP32 controlling a 28BYJ-48 stepper motor and a Jet
   
 ## TODO
 - Add manual opening functinonality, not really needed though
-- Make UI prettier
 
 ## Techonologies used
 
